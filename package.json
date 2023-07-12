@@ -1,0 +1,15 @@
+{
+  "name": "ultan",
+  "version": "1.0.0",
+  "description": "This JavaScript library provides a collection of utility functions that can be used in various types of JavaScript projects. These functions are designed to provide convenient, reusable code that accomplishes tasks such as string manipulation, array manipulation, object manipulation, and more.",
+  "main": "ultan.js",
+  "scripts": {
+    "test": "jest ./tests/ultan.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.6.1"
+  }
+}
