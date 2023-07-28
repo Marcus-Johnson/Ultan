@@ -5,6 +5,7 @@ Ultan provides a collection of utility functions that can be used in various typ
 ## Table of Contents
 - [Why use Ultan?](#why-use-ultan)
   - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
   - [String Manipulation](#string-manipulation)
   - [Greeting](#greeting)
   - [Object Utils](#object-utils)
@@ -13,6 +14,11 @@ Ultan provides a collection of utility functions that can be used in various typ
   - [Miscellaneous](#miscellaneous)
   - [Constants](#constants)
 
+
+## Installation
+```bash
+  npm install ultan
+```
 ## String Manipulation
 - **stringFormat**: This function replaces placeholders in a given string with supplied arguments.
 - **toTitleCase**: Converts a string to title case.
@@ -55,4 +61,3 @@ Ultan provides a collection of utility functions that can be used in various typ
 ## Constants
 - **DaysOfWeek**: An enumeration of the days of the week.
 - **HttpStatus**: An enumeration of common HTTP status codes.
-
