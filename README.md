@@ -6,6 +6,7 @@ Ultan provides a collection of utility functions that can be used in various typ
 - [Why use Ultan?](#why-use-ultan)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
+  - [Usage](#usage)
   - [String Manipulation](#string-manipulation)
   - [Greeting](#greeting)
   - [Object Utils](#object-utils)
@@ -16,9 +17,38 @@ Ultan provides a collection of utility functions that can be used in various typ
 
 
 ## Installation
-```bash
+```
   npm install ultan
 ```
+## Usage
+```
+const { stringFormat, greet, mergeArrays, isEmpty, regexes } = require('ultan');
+
+// String Manipulation
+const formattedString = stringFormat('Hello, {0}! Welcome to {1}.', 'John', 'Ultan');
+console.log(formattedString); // Output: "Hello, John! Welcome to Ultan."
+
+// Greeting
+greet({ name: 'Alice', age: 30 }); // Output: "Hello, Alice! You are 30 years old."
+greet(); // Output: "Hello, User! You are unknown years old."
+
+// Array Utils
+const array1 = [1, 2, 3];
+const array2 = [3, 4, 5];
+const mergedArray = mergeArrays(array1, array2);
+console.log(mergedArray); // Output: [1, 2, 3, 4, 5]
+
+// Object Utils
+const obj = { name: 'John', age: 25 };
+console.log(isEmpty(obj)); // Output: false
+
+// Regular Expressions
+const emailRegex = regexes.email;
+const isValidEmail = emailRegex.test('john@example.com');
+console.log(isValidEmail); // Output: true
+
+```
+
 ## String Manipulation
 - **stringFormat**: This function replaces placeholders in a given string with supplied arguments.
 - **toTitleCase**: Converts a string to title case.
