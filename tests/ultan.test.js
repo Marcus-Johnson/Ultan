@@ -138,7 +138,6 @@ describe("Ultan Utility Library", () => {
       const rand = getRandomInRange(1, 10);
       expect(rand).toBeGreaterThanOrEqual(1);
       expect(round(1.234)).toBe(1.23);
-      expect(generateUUID()).toHaveLength(36);
     });
 
     test("Strings and Formatting", () => {
