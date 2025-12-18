@@ -22,14 +22,27 @@
     "hipaa-compliant"
   ],
   "author": "Marcus Johnson",
-  "license": "ISC",
+  "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Marcus-Johnson/Ultan.git"
+    "url": "git+https://github.com/Marcus-Johnson/Ultan.git"
   },
+  "bugs": {
+    "url": "https://github.com/Marcus-Johnson/Ultan/issues"
+  },
+  "homepage": "https://github.com/Marcus-Johnson/Ultan#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "README.md"
+  ],
   "devDependencies": {
     "jest": "^29.7.0"
   }
