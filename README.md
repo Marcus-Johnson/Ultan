@@ -1,3 +1,4 @@
+[![Ultan CI/CD](https://github.com/Marcus-Johnson/Ultan/actions/workflows/node.js.yml/badge.svg)](https://github.com/Marcus-Johnson/Ultan/actions/workflows/node.js.yml)
 # Why use Ultan?
 
 Ultan is a utility library that bridges traditional JavaScript development with modern AI, healthcare (FHIR/HL7), and cloud-native architectures. Built for Fortune 500 environments, it provides enterprise-grade functions for string manipulation, array operations, object handling, healthcare data processing, AI prompt management, PHI masking, and reactive state management.
