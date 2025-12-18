@@ -2,7 +2,7 @@
   "name": "ultan",
   "version": "1.0.3",
   "description": "High-performance utility suite for modern JavaScript. Optimized for AI orchestration, HealthTech (FHIR) interoperability, and secure cloud system monitoring.",
-  "main": "src/ultan.js",
+  "main": "index.js",
   "scripts": {
     "test": "jest ./tests/ultan.test.js",
     "test:coverage": "jest ./tests/ultan.test.js --coverage"
