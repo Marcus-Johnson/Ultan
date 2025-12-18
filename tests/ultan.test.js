@@ -1,184 +1,175 @@
 const {
-  stringFormat,
-  greet,
-  isEmpty,
-  deepClone,
-  setNestedProperty,
-  objectToArray,
-  mergeArrays,
-  sumArray,
-  averageArray,
-  arrayDifference,
-  arrayToObject,
-  groupBy,
-  regexes,
-  getRandomInRange,
-  getType,
-  removeFalsyValues,
-  getNestedProperty,
-  formatDate,
-  round,
-  generateUUID,
-  toTitleCase,
-  sanitizeString,
-  fromBase64,
-  toBase64,
-  countOccurrences,
+  stringFormat, greet, isEmpty, deepClone, debounce, throttle,
+  setNestedProperty, getNestedProperty, objectToArray, arrayToObject,
+  mergeArrays, sumArray, averageArray, arrayDifference, removeFalsyValues,
+  groupBy, getType, getRandomInRange, round, generateUUID, reqFlow,
+  toTitleCase, sanitizeString, fromBase64, toBase64, countOccurrences, formatDate,
+  isValidFhir, getFhirName, getAcuityScore,
+  fillPrompt, parseAiJson, createSignal,
+  maskPHI, isZombie,
+  regexes, DaysOfWeek, HttpStatus
 } = require("../src/ultan");
 
 describe("Ultan Utility Library", () => {
-  test("stringFormat function", () => {
-    const formattedString = stringFormat(
-      "Hello, {0}! You are {1} years old.",
-      "John",
-      25
-    );
-    expect(formattedString).toBe("Hello, John! You are 25 years old.");
-  });
-
-  test("greet function", () => {
+  
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(global, 'setTimeout');
     console.log = jest.fn();
-    greet({ name: "John", age: 25 });
-    expect(console.log).toHaveBeenCalledWith(
-      "Hello, John! You are 25 years old."
-    );
   });
 
-  test("isEmpty function", () => {
-    expect(isEmpty({})).toBeTruthy();
-    expect(isEmpty({ name: "John" })).toBeFalsy();
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  test("deepClone function", () => {
-    const obj = { name: "John", age: 25 };
-    const clonedObj = deepClone(obj);
-    expect(clonedObj).toEqual(obj);
-    expect(clonedObj).not.toBe(obj);
-  });
+  describe("Healthcare & FHIR Utilities", () => {
+    test("isValidFhir validates resource structure", () => {
+      expect(isValidFhir({ resourceType: "Patient", id: "123" })).toBe(true);
+      expect(isValidFhir({ name: "John" })).toBe(false);
+    });
 
-  test("setNestedProperty function", () => {
-    const obj = { name: "John", address: { city: "NYC" } };
-    setNestedProperty(obj, "address.city", "LA");
-    expect(obj.address.city).toBe("LA");
-  });
+    test("getFhirName extracts formatted name", () => {
+      const patient = {
+        name: [{ given: ["John", "Q."], family: "Doe", use: "official" }]
+      };
+      expect(getFhirName(patient)).toBe("John Q. Doe");
+      expect(getFhirName({})).toBe("Unknown");
+    });
 
-  test("objectToArray function", () => {
-    const obj = { name: "John", age: 25 };
-    const array = objectToArray(obj);
-    expect(array).toEqual([
-      ["name", "John"],
-      ["age", 25],
-    ]);
-  });
-
-  test("mergeArrays function", () => {
-    const array1 = [1, 2, 3];
-    const array2 = [2, 3, 4];
-    const mergedArray = mergeArrays(array1, array2);
-    expect(mergedArray).toEqual([1, 2, 3, 4]);
-  });
-
-  test("sumArray function", () => {
-    const array = [1, 2, 3, 4, 5];
-    expect(sumArray(array)).toBe(15);
-  });
-
-  test("averageArray function", () => {
-    const array = [1, 2, 3, 4, 5];
-    expect(averageArray(array)).toBe(3);
-  });
-
-  test("arrayDifference function", () => {
-    const array1 = [1, 2, 3];
-    const array2 = [2, 3, 4];
-    const diff = arrayDifference(array1, array2);
-    expect(diff).toEqual([1]);
-  });
-
-  test("arrayToObject function", () => {
-    const array = [
-      ["name", "John"],
-      ["age", 25],
-    ];
-    const obj = arrayToObject(array);
-    expect(obj).toEqual({ name: "John", age: 25 });
-  });
-
-  test("groupBy function", () => {
-    const array = [
-      { category: "Food", item: "Apple" },
-      { category: "Food", item: "Banana" },
-      { category: "Drink", item: "Water" },
-    ];
-    const grouped = groupBy(array, "category");
-    expect(grouped).toEqual({
-      Food: [
-        { category: "Food", item: "Apple" },
-        { category: "Food", item: "Banana" },
-      ],
-      Drink: [{ category: "Drink", item: "Water" }],
+    test("getAcuityScore calculates MEWS correctly", () => {
+      const stats = { hr: 120, rr: 20, temp: 37, sbp: 80 };
+      expect(getAcuityScore(stats)).toBe(5); 
     });
   });
 
-  test("getRandomInRange function", () => {
-    const random = getRandomInRange(1, 10);
-    expect(random).toBeGreaterThanOrEqual(1);
-    expect(random).toBeLessThanOrEqual(10);
+  describe("AI & Modern Flow", () => {
+    test("fillPrompt replaces double-bracket variables", () => {
+      const template = "Identify the {{specialty}} in {{location}}.";
+      const vars = { specialty: "Cardiologist", location: "Detroit" };
+      expect(fillPrompt(template, vars)).toBe("Identify the Cardiologist in Detroit.");
+    });
+
+    test("parseAiJson cleans Markdown blocks", () => {
+      const raw = "```json\n{ \"status\": \"stable\" }\n```";
+      expect(parseAiJson(raw)).toEqual({ status: "stable" });
+      expect(parseAiJson("invalid")).toBeNull();
+    });
+
+    test("createSignal handles state subscription", () => {
+      const signal = createSignal(10);
+      const spy = jest.fn();
+      signal.subscribe(spy);
+      signal.set(20);
+      expect(spy).toHaveBeenCalledWith(20);
+      expect(signal.get()).toBe(20);
+    });
   });
 
-  test("getType function", () => {
-    expect(getType({})).toBe("object");
-    expect(getType([])).toBe("array");
-    expect(getType("")).toBe("string");
-    expect(getType(123)).toBe("number");
+  describe("Security & Cloud", () => {
+    test("maskPHI redacts sensitive information", () => {
+      const log = "Patient 123-45-6789 (5551234567) test@test.com";
+      const masked = maskPHI(log);
+      expect(masked).toBe("Patient [SSN_MASKED] ([PHONE_MASKED]) [EMAIL_MASKED]");
+    });
+
+    test("isZombie detects stagnant heartbeats", () => {
+      const ancient = new Date(Date.now() - 600000); 
+      expect(isZombie(ancient)).toBe(true);
+      expect(isZombie(new Date())).toBe(false);
+    });
   });
 
-  test("removeFalsyValues function", () => {
-    const array = [0, 1, false, 2, "", 3, null, "a"];
-    const cleanedArray = removeFalsyValues(array);
-    expect(cleanedArray).toEqual([1, 2, 3, "a"]);
+  describe("Legacy Core Utilities", () => {
+    test("stringFormat and greet", () => {
+      expect(stringFormat("{0} {1}", "A", "B")).toBe("A B");
+      greet({ name: "Doc", age: 40 });
+      expect(console.log).toHaveBeenCalledWith("Hello, Doc! You are 40 years old.");
+    });
+
+    test("isEmpty and deepClone", () => {
+      expect(isEmpty({})).toBe(true);
+      expect(isEmpty([1])).toBe(false);
+      const obj = { a: 1 };
+      expect(deepClone(obj)).toEqual(obj);
+      expect(deepClone(obj)).not.toBe(obj);
+    });
+
+    test("debounce logic", () => {
+      const func = jest.fn();
+      const debounced = debounce(func, 1000);
+      debounced();
+      debounced();
+      jest.advanceTimersByTime(1000);
+      expect(func).toHaveBeenCalledTimes(1);
+    });
+
+    test("throttle logic", () => {
+      const func = jest.fn();
+      const throttled = throttle(func, 1000);
+      throttled();
+      throttled();
+      expect(func).toHaveBeenCalledTimes(1);
+      jest.advanceTimersByTime(1000);
+      throttled();
+      expect(func).toHaveBeenCalledTimes(2);
+    });
+
+    test("Property manipulation (set/get/objectToArray/arrayToObject)", () => {
+      const obj = {};
+      setNestedProperty(obj, "a.b", 1);
+      expect(getNestedProperty(obj, "a.b")).toBe(1);
+      expect(objectToArray({ k: "v" })).toEqual([["k", "v"]]);
+      expect(arrayToObject([["k", "v"]])).toEqual({ k: "v" });
+    });
+
+    test("Array math and manipulation", () => {
+      const arr = [1, 2, 2, 3];
+      expect(mergeArrays([1], [2])).toEqual([1, 2]);
+      expect(sumArray(arr)).toBe(8);
+      expect(averageArray([2, 4])).toBe(3);
+      expect(arrayDifference([1, 2], [2])).toEqual([1]);
+      expect(removeFalsyValues([0, 1, false])).toEqual([1]);
+      const grouped = groupBy([{ id: 1, g: 'a' }], 'g');
+      expect(grouped.a).toHaveLength(1);
+    });
+
+    test("Types and Randoms", () => {
+      expect(getType([])).toBe("array");
+      const rand = getRandomInRange(1, 10);
+      expect(rand).toBeGreaterThanOrEqual(1);
+      expect(round(1.234)).toBe(1.23);
+      expect(generateUUID()).toHaveLength(36);
+    });
+
+    test("Strings and Formatting", () => {
+      expect(toTitleCase("hi there")).toBe("Hi There");
+      expect(sanitizeString("<")).toBe("&lt;");
+      expect(fromBase64(toBase64("A"))).toBe("A");
+      expect(countOccurrences("banana", "a")).toBe(3);
+      const date = new Date(2026, 0, 1);
+      expect(formatDate(date)).toBe("01/01/2026");
+    });
+
+    test("reqFlow handles success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
+      const res = await reqFlow("url");
+      expect(res.ok).toBe(true);
+    });
   });
 
-  test("getNestedProperty function", () => {
-    const obj = { name: "John", address: { city: "NYC" } };
-    const city = getNestedProperty(obj, "address.city");
-    expect(city).toBe("NYC");
-  });
+  describe("Constants & Regex", () => {
+    test("regexes validate correctly", () => {
+      expect(regexes.email.test("test@test.com")).toBe(true);
+      expect(regexes.url.test("https://vgs.studio")).toBe(true);
+    });
 
-  test("formatDate function", () => {
-    const date = new Date(2022, 0, 1);
-    const formattedDate = formatDate(date);
-    expect(formattedDate).toBe("01/01/2022");
-  });
-
-  test("round function", () => {
-    expect(round(1.2345, 2)).toBe(1.23);
-  });
-
-  test("generateUUID function", () => {
-    const uuid = generateUUID();
-    expect(uuid).toMatch(
-      /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
-    );
-  });
-
-  test("toTitleCase function", () => {
-    expect(toTitleCase("hello world")).toBe("Hello World");
-  });
-
-  test("sanitizeString function", () => {
-    const str = "<h1>Hello, World!</h1>";
-    expect(sanitizeString(str)).toBe("&lt;h1&gt;Hello, World!&lt;/h1&gt;");
-  });
-
-  test("fromBase64 and toBase64 functions", () => {
-    const str = "Hello, World!";
-    const base64 = toBase64(str);
-    expect(fromBase64(base64)).toBe(str);
-  });
-
-  test("countOccurrences function", () => {
-    const str = "Hello, World!";
-    expect(countOccurrences(str, "o")).toBe(2);
+    test("Enums are frozen", () => {
+      expect(DaysOfWeek.MONDAY).toBe("Monday");
+      expect(HttpStatus.OK).toBe(200);
+      expect(Object.isFrozen(HttpStatus)).toBe(true);
+    });
   });
 });

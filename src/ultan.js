@@ -1,35 +1,83 @@
-function stringFormat(format, ...args) {
-  return format.replace(/{(\d+)}/g, function (match, number) {
-    return typeof args[number] != "undefined" ? args[number] : match;
-  });
-}
+/**
+ * ULTAN.JS - The Swiss Army Knife for Development
+ * Integrates Legacy Utilities with AI, HealthTech, and Cloud Logic.
+ */
 
-function greet({ name = "User", age = "unknown" } = {}) {
-  console.log(`Hello, ${name}! You are ${age} years old.`);
-}
+const isValidFhir = (res) => !!(res?.resourceType && res?.id);
 
-function isEmpty(obj) {
-  for (var prop in obj) {
-    if (obj.hasOwnProperty(prop)) return false;
-  }
-  return JSON.stringify(obj) === JSON.stringify({});
-}
+const getFhirName = (p) => {
+  const n = p?.name?.find(x => x.use === 'official') || p?.name?.[0];
+  return n ? `${n.given?.join(' ')} ${n.family}`.trim() : "Unknown";
+};
 
-function deepClone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
+const getAcuityScore = ({ hr, rr, temp, sbp }) => {
+  let score = 0;
+  if (hr > 110 || hr < 50) score += 2;
+  if (rr > 24 || rr < 10) score += 3;
+  if (sbp < 90) score += 3;
+  return score; 
+};
 
-function debounce(func, delay = 300) {
-  let debounceTimer;
-  return function () {
-    const context = this;
-    const args = arguments;
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => func.apply(context, args), delay);
+const fillPrompt = (tmp, vars) => tmp.replace(/\{\{(\w+)\}\}/g, (m, k) => vars[k] ?? m);
+
+const parseAiJson = (str) => {
+  const clean = str.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(clean); } catch { return null; }
+};
+
+const createSignal = (val) => {
+  const subs = new Set();
+  return {
+    get: () => val,
+    set: (v) => { val = v; subs.forEach(f => f(v)); },
+    subscribe: (f) => { subs.add(f); return () => subs.delete(f); }
   };
+};
+
+const maskPHI = (str) => str
+  .replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[SSN_MASKED]")
+  .replace(/\b\d{10}\b/g, "[PHONE_MASKED]")
+  .replace(/\S+@\S+\.\S+/g, "[EMAIL_MASKED]");
+
+/** Detects "Zombie" sessions or stagnant heartbeats */
+const isZombie = (last, limit = 300000) => (Date.now() - new Date(last).getTime()) > limit;
+
+function stringFormat(format, ...args) {
+  return format.replace(/{(\d+)}/g, (match, number) => typeof args[number] != "undefined" ? args[number] : match);
 }
 
-function setNestedProperty(obj, path, value) {
+const greet = ({ name = "User", age = "unknown" } = {}) => console.log(`Hello, ${name}! You are ${age} years old.`);
+
+const isEmpty = (obj) => {
+  if (obj == null) return true;
+  if (Array.isArray(obj) || typeof obj === 'string') return obj.length === 0;
+  return Object.keys(obj).length === 0;
+};
+
+const deepClone = (obj) => {
+  try { return structuredClone(obj); } catch { return JSON.parse(JSON.stringify(obj)); }
+};
+
+const debounce = (func, delay = 300) => {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => func.apply(this, args), delay);
+  };
+};
+
+const throttle = (func, limit) => {
+  let inThrottle;
+  return function (...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
+
+const setNestedProperty = (obj, path, value) => {
   const keys = path.split(".");
   let current = obj;
   while (keys.length > 1) {
@@ -37,40 +85,47 @@ function setNestedProperty(obj, path, value) {
     current = current[key] = current[key] || {};
   }
   current[keys[0]] = value;
+};
+
+const getNestedProperty = (obj, path) => path.split(".").reduce((p, c) => (p ? p[c] : null), obj);
+
+const objectToArray = (obj) => Object.entries(obj);
+const arrayToObject = (arr) => arr.reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {});
+const mergeArrays = (a1, a2) => [...new Set([...a1, ...a2])];
+const sumArray = (arr) => arr.reduce((a, b) => a + (Number(b) || 0), 0);
+const averageArray = (arr) => arr.length ? sumArray(arr) / arr.length : 0;
+const arrayDifference = (a1, a2) => a1.filter((x) => !a2.includes(x));
+const removeFalsyValues = (arr) => arr.filter(Boolean);
+
+const groupBy = (arr, key) => arr.reduce((res, curr) => {
+  (res[curr[key]] = res[curr[key]] || []).push(curr);
+  return res;
+}, {});
+
+const getType = (v) => Object.prototype.toString.call(v).slice(8, -1).toLowerCase();
+const getRandomInRange = (min, max) => Math.random() * (max - min) + min;
+const round = (num, dec = 2) => Number(Math.round(num + "e" + dec) + "e-" + dec);
+const generateUUID = () => crypto.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+  const r = (Math.random() * 16) | 0;
+  return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+});
+
+async function reqFlow(url, options = {}) {
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
-function objectToArray(obj) {
-  return Object.entries(obj);
-}
+const toTitleCase = (str) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+const sanitizeString = (str) => {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
+  return str.replace(/[&<>"']/g, (m) => map[m]);
+};
 
-function mergeArrays(array1, array2) {
-  return [...new Set([...array1, ...array2])];
-}
-
-function sumArray(array) {
-  return array.reduce((a, b) => a + b, 0);
-}
-
-function averageArray(array) {
-  return sumArray(array) / array.length;
-}
-
-function arrayDifference(array1, array2) {
-  return array1.filter((x) => !array2.includes(x));
-}
-
-function arrayToObject(array) {
-  return array.reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
-}
-
-function groupBy(array, key) {
-  return array.reduce((result, currentValue) => {
-    (result[currentValue[key]] = result[currentValue[key]] || []).push(
-      currentValue
-    );
-    return result;
-  }, {});
-}
+const fromBase64 = (b64) => decodeURIComponent(escape(atob(b64)));
+const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
+const countOccurrences = (str, sub) => str.split(sub).length - 1;
+const formatDate = (date) => new Intl.DateTimeFormat("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 
 const regexes = {
   email: /\S+@\S+\.\S+/,
@@ -78,145 +133,23 @@ const regexes = {
   url: /^(http|https):\/\/[^ "]+$/,
 };
 
-function getRandomInRange(min, max) {
-  return Math.random() * (max - min) + min;
-}
+const DaysOfWeek = Object.freeze({
+  MONDAY: "Monday", TUESDAY: "Tuesday", WEDNESDAY: "Wednesday",
+  THURSDAY: "Thursday", FRIDAY: "Friday", SATURDAY: "Saturday", SUNDAY: "Sunday"
+});
 
-function getType(variable) {
-  return Object.prototype.toString.call(variable).slice(8, -1).toLowerCase();
-}
-
-function removeFalsyValues(array) {
-  return array.filter(Boolean);
-}
-
-function getNestedProperty(obj, keyPath) {
-  return keyPath.split(".").reduce((prev, curr) => {
-    return prev ? prev[curr] : null;
-  }, obj);
-}
-
-function formatDate(date, format = "YYYY-MM-DD") {
-  const options = { year: "numeric", month: "2-digit", day: "2-digit" };
-  return new Intl.DateTimeFormat("en-US", options).format(date);
-}
-
-function throttle(func, limit) {
-  let inThrottle;
-  return function () {
-    const args = arguments;
-    const context = this;
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-}
-
-function round(number, decimalPlaces = 2) {
-  return Number(
-    Math.round(number + "e" + decimalPlaces) + "e-" + decimalPlaces
-  );
-}
-
-function generateUUID() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    let r = (Math.random() * 16) | 0,
-      v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-async function reqFlow(url, options = {}) {
-  const response = await fetch(url, options);
-  if (response.ok) {
-    return response.json();
-  } else {
-    throw new Error(`HTTP request failed with status ${response.status}`);
-  }
-}
-
-function toTitleCase(str) {
-  return str.replace(/\w\S*/g, function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
-}
-
-function sanitizeString(input) {
-  const map = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return input.replace(/[&<>"']/g, function (m) {
-    return map[m];
-  });
-}
-
-function fromBase64(base64) {
-  return decodeURIComponent(escape(atob(base64)));
-}
-
-function toBase64(str) {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
-function countOccurrences(string, substring) {
-  return string.split(substring).length - 1;
-}
-
-const DaysOfWeek = {
-  MONDAY: "Monday",
-  TUESDAY: "Tuesday",
-  WEDNESDAY: "Wednesday",
-  THURSDAY: "Thursday",
-  FRIDAY: "Friday",
-  SATURDAY: "Saturday",
-  SUNDAY: "Sunday",
-};
-
-const HttpStatus = {
-  OK: 200,
-  CREATED: 201,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  SERVER_ERROR: 500,
-};
+const HttpStatus = Object.freeze({
+  OK: 200, CREATED: 201, BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, SERVER_ERROR: 500
+});
 
 module.exports = {
-  stringFormat,
-  greet,
-  isEmpty,
-  deepClone,
-  debounce,
-  setNestedProperty,
-  objectToArray,
-  mergeArrays,
-  sumArray,
-  averageArray,
-  arrayDifference,
-  arrayToObject,
-  groupBy,
-  regexes,
-  getRandomInRange,
-  getType,
-  removeFalsyValues,
-  getNestedProperty,
-  formatDate,
-  throttle,
-  round,
-  generateUUID,
-  reqFlow,
-  toTitleCase,
-  sanitizeString,
-  fromBase64,
-  toBase64,
-  countOccurrences,
-  DaysOfWeek,
-  HttpStatus,
+  stringFormat, greet, isEmpty, deepClone, debounce, throttle, 
+  setNestedProperty, getNestedProperty, objectToArray, arrayToObject,
+  mergeArrays, sumArray, averageArray, arrayDifference, removeFalsyValues,
+  groupBy, getType, getRandomInRange, round, generateUUID, reqFlow,
+  toTitleCase, sanitizeString, fromBase64, toBase64, countOccurrences, formatDate,
+  isValidFhir, getFhirName, getAcuityScore,
+  fillPrompt, parseAiJson, createSignal,
+  maskPHI, isZombie,
+  regexes, DaysOfWeek, HttpStatus
 };
