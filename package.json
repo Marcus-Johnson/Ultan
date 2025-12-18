@@ -1,15 +1,36 @@
 {
   "name": "ultan",
   "version": "1.0.3",
-  "description": "This JavaScript library provides a collection of utility functions that can be used in various types of JavaScript projects. These functions are designed to provide convenient, reusable code that accomplishes tasks such as string manipulation, array manipulation, object manipulation, and more.",
-  "main": "ultan.js",
+  "description": "High-performance utility suite for modern JavaScript. Optimized for AI orchestration, HealthTech (FHIR) interoperability, and secure cloud system monitoring.",
+  "main": "src/ultan.js",
   "scripts": {
-    "test": "jest ./tests/ultan.test.js"
+    "test": "jest ./tests/ultan.test.js",
+    "test:coverage": "jest ./tests/ultan.test.js --coverage"
   },
-  "keywords": ["utility", "utilities", "helper", "tools", "functions", "javascript", "js", "string", "array", "object", "manipulation"],
-  "author": "",
+  "keywords": [
+    "utility",
+    "utilities",
+    "helper",
+    "tools",
+    "fhir",
+    "healthtech",
+    "ai-prompting",
+    "cloud-security",
+    "javascript",
+    "string-manipulation",
+    "array-helpers",
+    "hipaa-compliant"
+  ],
+  "author": "Marcus Johnson",
   "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Marcus-Johnson/Ultan.git"
+  },
   "devDependencies": {
-    "jest": "^29.6.1"
+    "jest": "^29.7.0"
   }
 }
